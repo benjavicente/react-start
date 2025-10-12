@@ -1,0 +1,6 @@
+useNodeVersion: 24.9.0
+packageManagerStrictVersion: true
+verifyDepsBeforeRun: install
+
+overrides:
+  vite: npm:rolldown-vite@latest
