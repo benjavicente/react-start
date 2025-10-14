@@ -9,70 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppDemoConvexRouteImport } from './routes/_app.demo.convex'
-import { Route as AppDemoAuthRouteImport } fro./routes/_app.demo.auth.tsxemo.auth'
+import { Route as DemoConvexRouteImport } from './routes/demo.convex'
+import { Route as DemoAuthRouteImport } from './routes/demo.auth'
 
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppDemoConvexRoute = AppDemoConvexRouteImport.update({
+const DemoConvexRoute = DemoConvexRouteImport.update({
   id: '/demo/convex',
   path: '/demo/convex',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppDemoAuthRoute = AppDemoAuthRouteImport.update({
+const DemoAuthRoute = DemoAuthRouteImport.update({
   id: '/demo/auth',
   path: '/demo/auth',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo/auth': typeof AppDemoAuthRoute
-  '/demo/convex': typeof AppDemoConvexRoute
+  '/demo/auth': typeof DemoAuthRoute
+  '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/demo/auth': typeof AppDemoAuthRoute
-  '/demo/convex': typeof AppDemoConvexRoute
+  '/demo/auth': typeof DemoAuthRoute
+  '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_app': typeof AppRouteWithChildren
-  '/_app/demo/auth': typeof AppDemoAuthRoute
-  '/_app/demo/convex': typeof AppDemoConvexRoute
+  '/demo/auth': typeof DemoAuthRoute
+  '/demo/convex': typeof DemoConvexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/demo/auth' | '/demo/convex'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/demo/auth' | '/demo/convex'
-  id: '__root__' | '/' | '/_app' | '/_app/demo/auth' | '/_app/demo/convex'
+  id: '__root__' | '/' | '/demo/auth' | '/demo/convex'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRouteWithChildren
+  DemoAuthRoute: typeof DemoAuthRoute
+  DemoConvexRoute: typeof DemoConvexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -80,38 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/demo/convex': {
-      id: '/_app/demo/convex'
+    '/demo/convex': {
+      id: '/demo/convex'
       path: '/demo/convex'
       fullPath: '/demo/convex'
-      preLoaderRoute: typeof AppDemoConvexRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof DemoConvexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/demo/auth': {
-      id: '/_app/demo/auth'
+    '/demo/auth': {
+      id: '/demo/auth'
       path: '/demo/auth'
       fullPath: '/demo/auth'
-      preLoaderRoute: typeof AppDemoAuthRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof DemoAuthRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AppRouteChildren {
-  AppDemoAuthRoute: typeof AppDemoAuthRoute
-  AppDemoConvexRoute: typeof AppDemoConvexRoute
-}
-
-const AppRouteChildren: AppRouteChildren = {
-  AppDemoAuthRoute: AppDemoAuthRoute,
-  AppDemoConvexRoute: AppDemoConvexRoute,
-}
-
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRouteWithChildren,
+  DemoAuthRoute: DemoAuthRoute,
+  DemoConvexRoute: DemoConvexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

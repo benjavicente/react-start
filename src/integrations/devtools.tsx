@@ -10,11 +10,11 @@ export function Devtools() {
 			}}
 			plugins={[
 				{
-					name: 'Tanstack Router',
+					name: 'Router',
 					render: <TanStackRouterDevtoolsPanel />,
 				},
 				{
-					name: 'Tanstack Query',
+					name: 'Query',
 					render: <ReactQueryDevtoolsPanel />,
 				},
 			]}

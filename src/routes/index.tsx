@@ -1,58 +1,32 @@
-import { useConvexQuery } from '@convex-dev/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { ConvexClient } from 'convex/browser'
-import { api } from '#/convex/_generated/api'
+import { Icon } from '@/components/icon'
 
 export const Route = createFileRoute('/')({
 	component: App,
 })
 
-function Repr() {
-	// Does not work
-	const data = useConvexQuery(api.todos.list)
-	// Works
-	const [state, setState] = useState()
-	useEffect(() => {
-		;(async () => {
-			const convex = new ConvexClient(import.meta.env.VITE_CONVEX_URL)
-			const result = await convex.query(api.todos.list, {})
-			setState(result)
-		})()
-	}, [])
-	return (
-		<>
-			<div>Does not work: {JSON.stringify({ data })}</div>
-			<div>Works: {JSON.stringify({ state })}</div>
-		</>
-	)
-}
-
 function App() {
 	return (
-		<div className="text-center">
-			<header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
-				<p>
-					Edit <code>src/routes/index.tsx</code> and save to reload.
-				</p>
-				<Repr />
-				<a
-					className="text-[#61dafb] hover:underline"
-					href="https://reactjs.org"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					Learn React
-				</a>
-				<a
-					className="text-[#61dafb] hover:underline"
-					href="https://tanstack.com"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					Learn TanStack
-				</a>
-			</header>
-		</div>
+		<main className="max-w-2xl mx-auto p-2">
+			<h1 className="text-2xl font-bold mt-4 text-gray-900">
+				React Start Template
+			</h1>
+			<p>Simple template to get started with fast development with React.</p>
+			<h2 className="mt-4 font-bold text-xl text-gray-900">Whats included:</h2>
+			<ul className="list-disc pl-4">
+				<li>Tanst ack Start</li>
+				<li>Start and Query Devtools</li>
+				<li>
+					Convex as a backend with the Tanstack Query Adapter for preloading
+				</li>
+				<li>Simple authentication with Better Auth</li>
+				<li>Styles with Tailwind CSS</li>
+				<li>
+					<span>Material Symbols as Icons</span>
+					<Icon name="rocket" />
+				</li>
+				<li>Cloudflare deploy</li>
+			</ul>
+		</main>
 	)
 }

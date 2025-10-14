@@ -1,15 +1,19 @@
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { Tabs } from '@base-ui-components/react/tabs'
 import { convexQuery, useConvexQuery } from '@convex-dev/react-query'
 import { api } from '#/convex/_generated/api'
-import { attachQueryFnReferences } from '@/integrations/convex/queries'
+import { extendContext } from '@/integrations/ctx'
 
 export const Route = createFileRoute('/demo/auth')({
+	ssr: false,
 	component: RouteComponent,
 	beforeLoad: ({ context }) =>
-		attachQueryFnReferences(context, {
-			me: convexQuery(api.auth.getCurrentUser, {}),
+		extendContext(context, {
+			query: {
+				me: convexQuery(api.auth.getCurrentUser, {}),
+			},
 		}),
 	loader: async ({ context: { queryClient, query } }) => {
 		await Promise.allSettled([queryClient.ensureQueryData(query.me)])
@@ -18,17 +22,12 @@ export const Route = createFileRoute('/demo/auth')({
 
 function RouteComponent() {
 	const { auth } = Route.useRouteContext()
+	const user = useConvexQuery(api.auth.getCurrentUser, {})
 
-	const user = {
-		data: useConvexQuery(api.auth.getCurrentUser, {}),
-	}
-
-	const [isLogin, setIsLogin] = useState(true)
 	const [formData, setFormData] = useState({
 		email: '',
 		password: '',
 		name: '',
-		image: '',
 	})
 
 	const loginMutation = useMutation({
@@ -44,36 +43,28 @@ function RouteComponent() {
 				password,
 				callbackURL: '/dashboard',
 			})
-			if (error) {
-				console.error('Login failed:', error)
-			}
+			if (error) throw new Error(error.message)
 			return data
 		},
 	})
 
-	// Signup mutation
 	const signupMutation = useMutation({
 		mutationFn: async ({
 			email,
 			password,
 			name,
-			image,
 		}: {
 			email: string
 			password: string
 			name: string
-			image?: string
 		}) => {
 			const { data, error } = await auth.signUp.email({
 				email,
 				password,
 				name,
-				image,
 				callbackURL: '/dashboard',
 			})
-			if (error) {
-				console.error('Signup failed:', error)
-			}
+			if (error) throw new Error(error.message)
 			return data
 		},
 	})
@@ -81,264 +72,198 @@ function RouteComponent() {
 	const logoutMutation = useMutation({
 		mutationFn: async () => {
 			const { data, error } = await auth.signOut()
-			if (error) {
-				console.error('Logout failed:', error)
-			}
+			if (error) throw new Error(error.message)
 			return data
 		},
 	})
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target
-		setFormData((prev) => ({ ...prev, [name]: value }))
+	const handleLogin = (e: React.FormEvent) => {
+		e.preventDefault()
+		loginMutation.mutate({
+			email: formData.email,
+			password: formData.password,
+		})
 	}
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSignup = (e: React.FormEvent) => {
 		e.preventDefault()
-
-		if (isLogin) {
-			loginMutation.mutate({
-				email: formData.email,
-				password: formData.password,
-			})
-		} else {
-			signupMutation.mutate({
-				email: formData.email,
-				password: formData.password,
-				name: formData.name,
-				image: formData.image,
-			})
-		}
+		signupMutation.mutate({
+			email: formData.email,
+			password: formData.password,
+			name: formData.name,
+		})
 	}
 
 	const isLoading = loginMutation.isPending || signupMutation.isPending
+	const error = loginMutation.error || signupMutation.error
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-			<div className="max-w-md w-full space-y-8">
-				<div>
-					<h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-						{isLogin ? 'Sign in to your account' : 'Create your account'}
-					</h2>
-					<p className="mt-2 text-center text-sm text-gray-600">
-						Authentication Demo
-					</p>
+		<main className="max-w-2xl mx-auto p-2">
+			<h1 className="text-2xl font-bold mt-4 text-gray-900">
+				Authentication Demo
+			</h1>
+			<p>Simple authentication with Better Auth and Convex.</p>
+
+			{user ? (
+				<div className="mt-4 p-4 border border-gray-200 rounded">
+					<p className="mb-4">Logged in as: {user.email}</p>
+					<button
+						onClick={() => logoutMutation.mutate()}
+						className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+					>
+						Logout
+					</button>
 				</div>
-
-				<div className="bg-white py-8 px-6 shadow-lg rounded-lg">
-					{/* Tab switcher */}
-					<div className="flex mb-6">
-						<button
-							type="button"
-							className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg border ${
-								isLogin
-									? 'bg-indigo-50 border-indigo-500 text-indigo-700'
-									: 'bg-gray-50 border-gray-300 text-gray-500 hover:text-gray-700'
-							}`}
-							onClick={() => setIsLogin(true)}
-						>
-							Login
-						</button>
-						<button
-							type="button"
-							className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg border-l-0 border ${
-								!isLogin
-									? 'bg-indigo-50 border-indigo-500 text-indigo-700'
-									: 'bg-gray-50 border-gray-300 text-gray-500 hover:text-gray-700'
-							}`}
-							onClick={() => setIsLogin(false)}
-						>
-							Sign Up
-						</button>
-					</div>
-
-					<form className="space-y-6" onSubmit={handleSubmit}>
-						{/* Name field - only for signup */}
-						{!isLogin && (
-							<div>
-								<label
-									htmlFor="name"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Full Name
-								</label>
-								<input
-									id="name"
-									name="name"
-									type="text"
-									required={!isLogin}
-									value={formData.name}
-									onChange={handleInputChange}
-									className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-									placeholder="Enter your full name"
-								/>
-							</div>
-						)}
-
-						{/* Email field */}
-						<div>
-							<label
-								htmlFor="email"
-								className="block text-sm font-medium text-gray-700"
+			) : (
+				<div className="mt-4">
+					<Tabs.Root defaultValue="login" className="w-full">
+						<Tabs.List className="flex border-b border-gray-200">
+							<Tabs.Tab
+								value="login"
+								className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[selected]:text-gray-900 data-[selected]:border-gray-900 border-b-2 border-transparent"
 							>
-								Email Address
-							</label>
-							<input
-								id="email"
-								name="email"
-								type="email"
-								required
-								value={formData.email}
-								onChange={handleInputChange}
-								className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-								placeholder="Enter your email"
-							/>
-						</div>
-
-						{/* Password field */}
-						<div>
-							<label
-								htmlFor="password"
-								className="block text-sm font-medium text-gray-700"
+								Login
+							</Tabs.Tab>
+							<Tabs.Tab
+								value="signup"
+								className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 data-[selected]:text-gray-900 data-[selected]:border-gray-900 border-b-2 border-transparent"
 							>
-								Password
-							</label>
-							<input
-								id="password"
-								name="password"
-								type="password"
-								required
-								value={formData.password}
-								onChange={handleInputChange}
-								className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-								placeholder="Enter your password (min 8 characters)"
-								minLength={8}
-							/>
-						</div>
+								Sign Up
+							</Tabs.Tab>
+						</Tabs.List>
 
-						{/* Image URL field - only for signup */}
-						{!isLogin && (
-							<div>
-								<label
-									htmlFor="image"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Profile Image URL (Optional)
-								</label>
-								<input
-									id="image"
-									name="image"
-									type="url"
-									value={formData.image}
-									onChange={handleInputChange}
-									className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-									placeholder="https://example.com/avatar.jpg"
-								/>
-							</div>
-						)}
-
-						{/* Error messages */}
-						{(loginMutation.error || signupMutation.error) && (
-							<div className="bg-red-50 border border-red-200 rounded-md p-4">
-								<div className="flex">
-									<div className="ml-3">
-										<h3 className="text-sm font-medium text-red-800">
-											{isLogin ? 'Login failed' : 'Signup failed'}
-										</h3>
-										<div className="mt-2 text-sm text-red-700">
-											{(loginMutation.error || signupMutation.error)?.message ||
-												'An error occurred'}
-										</div>
-									</div>
+						<Tabs.Panel value="login" className="mt-4">
+							<form onSubmit={handleLogin} className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700">
+										Email
+									</label>
+									<input
+										type="email"
+										required
+										value={formData.email}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												email: e.target.value,
+											}))
+										}
+										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-gray-500"
+										placeholder="your@email.com"
+									/>
 								</div>
-							</div>
-						)}
 
-						{/* Success messages */}
-						{(loginMutation.isSuccess || signupMutation.isSuccess) && (
-							<div className="bg-green-50 border border-green-200 rounded-md p-4">
-								<div className="flex">
-									<div className="ml-3">
-										<h3 className="text-sm font-medium text-green-800">
-											{isLogin
-												? 'Login successful!'
-												: 'Account created successfully!'}
-										</h3>
-										<div className="mt-2 text-sm text-green-700">
-											{isLogin
-												? 'Redirecting to dashboard...'
-												: 'Please check your email to verify your account.'}
-										</div>
-									</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700">
+										Password
+									</label>
+									<input
+										type="password"
+										required
+										minLength={8}
+										value={formData.password}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												password: e.target.value,
+											}))
+										}
+										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-gray-500"
+										placeholder="Min 8 characters"
+									/>
 								</div>
-							</div>
-						)}
 
-						{/* Submit button */}
-						<div>
-							<button
-								type="submit"
-								disabled={isLoading}
-								className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-									isLoading
-										? 'bg-gray-400 cursor-not-allowed'
-										: 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-								}`}
-							>
-								{isLoading ? (
-									<>
-										<svg
-											className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-										>
-											<circle
-												className="opacity-25"
-												cx="12"
-												cy="12"
-												r="10"
-												stroke="currentColor"
-												strokeWidth="4"
-											></circle>
-											<path
-												className="opacity-75"
-												fill="currentColor"
-												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-											></path>
-										</svg>
-										{isLogin ? 'Signing in...' : 'Creating account...'}
-									</>
-								) : (
-									<>{isLogin ? 'Sign in' : 'Create account'}</>
+								{error && (
+									<div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
+										Error: {error.message}
+									</div>
 								)}
-							</button>
-						</div>
-					</form>
 
-					{/* Additional info */}
-					<div className="mt-6 text-center">
-						<p className="text-xs text-gray-500">
-							This is a demo authentication form. The authClient API calls are
-							mocked.
-						</p>
-					</div>
+								<button
+									type="submit"
+									disabled={isLoading}
+									className="w-full px-4 py-2 bg-gray-800 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+								>
+									{isLoading ? 'Loading...' : 'Sign In'}
+								</button>
+							</form>
+						</Tabs.Panel>
+
+						<Tabs.Panel value="signup" className="mt-4">
+							<form onSubmit={handleSignup} className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700">
+										Name
+									</label>
+									<input
+										type="text"
+										required
+										value={formData.name}
+										onChange={(e) =>
+											setFormData((prev) => ({ ...prev, name: e.target.value }))
+										}
+										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-gray-500"
+										placeholder="Your name"
+									/>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium text-gray-700">
+										Email
+									</label>
+									<input
+										type="email"
+										required
+										value={formData.email}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												email: e.target.value,
+											}))
+										}
+										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-gray-500"
+										placeholder="your@email.com"
+									/>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium text-gray-700">
+										Password
+									</label>
+									<input
+										type="password"
+										required
+										minLength={8}
+										value={formData.password}
+										onChange={(e) =>
+											setFormData((prev) => ({
+												...prev,
+												password: e.target.value,
+											}))
+										}
+										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-gray-500"
+										placeholder="Min 8 characters"
+									/>
+								</div>
+
+								{error && (
+									<div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
+										Error: {error.message}
+									</div>
+								)}
+
+								<button
+									type="submit"
+									disabled={isLoading}
+									className="w-full px-4 py-2 bg-gray-800 text-white rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+								>
+									{isLoading ? 'Loading...' : 'Sign Up'}
+								</button>
+							</form>
+						</Tabs.Panel>
+					</Tabs.Root>
 				</div>
-				<button
-					type="button"
-					className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-					onClick={() => logoutMutation.mutate()}
-				>
-					Logout
-				</button>
-				{user.data && (
-					<div className="mt-6 text-center">
-						<p className="text-xs text-gray-500">
-							Logged in as {user.data.email}
-						</p>
-					</div>
-				)}
-			</div>
-		</div>
+			)}
+		</main>
 	)
 }
