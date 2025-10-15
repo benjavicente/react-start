@@ -1,14 +1,6 @@
 # React Start Template
 
-A template to build fast.
-
-- Tanstack Start
-- Convex with preloading
-- Better Auth
-- Tailwind CSS
-- Base UI
-- Cloudflare deployment
-- pnpm with single app setup
+A template to build fast with React.
 
 ```sh
 pnpm dev
@@ -60,6 +52,12 @@ pnpm run deploy
 # First time deploying might require an interactive setup
 # Run this on the first time
 pnpm run deploy:cloudflare
+```
+
+## Chore utilities
+
+```sh
+pnpm update --latest --interactive
 ```
 
 ## Future

@@ -41,7 +41,7 @@ function RouteComponent() {
 			const { data, error } = await auth.signIn.email({
 				email,
 				password,
-				callbackURL: '/dashboard',
+				callbackURL: '/',
 			})
 			if (error) throw new Error(error.message)
 			return data
@@ -62,7 +62,7 @@ function RouteComponent() {
 				email,
 				password,
 				name,
-				callbackURL: '/dashboard',
+				callbackURL: '/',
 			})
 			if (error) throw new Error(error.message)
 			return data
