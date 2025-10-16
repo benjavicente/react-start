@@ -5,7 +5,7 @@
 	font-style: normal;
 	font-weight: 100 700;
 	font-display: block;
-	src: url('material-symbols/material-symbols-rounded.woff2?url')
+	src: url('@material-symbols/font-500/material-symbols-rounded.woff2')
 		format('woff2');
 }
 
@@ -16,6 +16,8 @@
 	text-rendering: optimizeLegibility;
 	font-feature-settings: 'liga';
 	vertical-align: bottom;
+	font-display: block;
+	user-select: none;
 	font-variation-settings:
 		'FILL' 1,
 		'wght' 400,

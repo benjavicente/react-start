@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import type { ComponentProps } from 'react'
-import type { MaterialSymbol } from 'material-symbols'
+import type { MaterialSymbol } from '@material-symbols/font-500'
 
 export function Icon({ name, className, ...props }: IconProps) {
 	return (

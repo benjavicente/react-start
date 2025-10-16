@@ -4,11 +4,12 @@ import {
 	Scripts,
 	createRootRouteWithContext,
 } from '@tanstack/react-router'
-import materialSymbolsFont from 'material-symbols/material-symbols-rounded.woff2?url'
+import materialSymbolsFont from '@material-symbols/font-500/material-symbols-rounded.woff2?url'
 import appCss from '../styles.css?url'
 
 import type { RouterContext } from '@/context'
 import { Devtools } from '@/integrations/devtools'
+import { seo } from '@/utils/seo'
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	head: () => ({
@@ -20,9 +21,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 				name: 'viewport',
 				content: 'width=device-width, initial-scale=1',
 			},
-			{
+			...seo({
 				title: 'React Start',
-			},
+				description: 'A React starter project with TanStack Start',
+				url: 'https://github.com/benjavicente/react-start',
+			}),
 		],
 		links: [
 			{
@@ -33,6 +36,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 				rel: 'preload',
 				as: 'font',
 				href: materialSymbolsFont,
+				fetchPriority: 'high',
+				crossOrigin: 'anonymous',
+			},
+			{
+				rel: 'preconnect',
+				href: import.meta.env.VITE_CONVEX_SITE_URL,
 			},
 		],
 	}),

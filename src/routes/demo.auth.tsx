@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import { Tabs } from '@base-ui-components/react/tabs'
-import { convexQuery, useConvexQuery } from '@convex-dev/react-query'
+import { convexQuery } from '@convex-dev/react-query'
 import { api } from '#/convex/_generated/api'
 import { extendContext } from '@/integrations/ctx'
 
@@ -21,8 +21,8 @@ export const Route = createFileRoute('/demo/auth')({
 })
 
 function RouteComponent() {
-	const { auth } = Route.useRouteContext()
-	const user = useConvexQuery(api.auth.getCurrentUser, {})
+	const { auth, query } = Route.useRouteContext()
+	const user = useSuspenseQuery(query.me)
 
 	const [formData, setFormData] = useState({
 		email: '',
@@ -104,9 +104,9 @@ function RouteComponent() {
 			</h1>
 			<p>Simple authentication with Better Auth and Convex.</p>
 
-			{user ? (
+			{user.data ? (
 				<div className="mt-4 p-4 border border-gray-200 rounded">
-					<p className="mb-4">Logged in as: {user.email}</p>
+					<p className="mb-4">Logged in as: {user.data.email}</p>
 					<button
 						onClick={() => logoutMutation.mutate()}
 						className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
