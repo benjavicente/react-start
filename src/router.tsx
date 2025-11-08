@@ -14,6 +14,10 @@ export const getRouter = () => {
 	return createRouter({
 		routeTree,
 		defaultPreload: 'intent',
+		// Disable that the pending component should
+		// have a minimun time been displayed
+		defaultPendingMinMs: 0,
+		defaultPendingMs: 1000,
 		context: {
 			convexClient,
 			queryClient,
